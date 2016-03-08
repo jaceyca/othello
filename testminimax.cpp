@@ -31,12 +31,13 @@ int main(int argc, char *argv[]) {
      * TODO: Write code to set your player's internal board state to the 
      * example state.
      */
+    player->board = board;
 
     // Get player's move and check if it's right.
     Move *move = player->doMove(NULL, 0);
 
     if (move != NULL && move->x == 1 && move->y == 1) {
-        printf("Correct move: (1, 1)");
+        printf("Correct move: (1, 1)\n");
     } else {
         printf("Wrong move: got ");
         if (move == NULL) {

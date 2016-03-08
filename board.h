@@ -15,21 +15,25 @@ private:
     bool get(Side side, int x, int y);
     void set(Side side, int x, int y);
     bool onBoard(int x, int y);
+    void flip(int x, int y);
+
       
 public:
     Board();
     ~Board();
     Board *copy();
-        
-    bool isDone();
-    bool hasMoves(Side side);
-    bool checkMove(Move *m, Side side);
+    
+    static const int heuristic_values[64];
+    
     void doMove(Move *m, Side side);
+    Board *doLegalMove(Move *m, Side side);
+    int score(Side side);
+    int simple_score(Side side);
     int count(Side side);
     int countBlack();
     int countWhite();
-
     void setBoard(char data[]);
+    void printboard();
 };
 
 #endif

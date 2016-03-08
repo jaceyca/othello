@@ -1,4 +1,6 @@
 #include "board.h"
+#include <iostream>
+using namespace std;
 
 /*
  * Make a standard 8x8 othello board and initialize it to the standard setup.
@@ -18,7 +20,18 @@ Board::Board() {
 Board::~Board() {
 }
 
-/*
+const int Board::heuristic_values[64] =
+    {20,-3,11, 8, 8,11,-3,20,
+     -3,-7,-4, 1, 1,-4,-7,-3,
+     11,-4, 2, 2, 2, 2,-4,11,
+      8, 1, 2,-3,-3, 2, 1, 8,
+      8, 1, 2,-3,-3, 2, 1, 8,
+     11,-4, 2, 2, 2, 2,-4,11,
+     -3,-7,-4, 1, 1,-4,-7,-3,
+     20,-3,11, 8, 8,11,-3,20,};
+
+
+/**
  * Returns a copy of this board.
  */
 Board *Board::copy() {
@@ -28,88 +41,52 @@ Board *Board::copy() {
     return newBoard;
 }
 
+/**
+Returns whether (x, y) is occupied.
+*/
 bool Board::occupied(int x, int y) {
     return taken[x + 8*y];
 }
 
+/**
+Returns whether (x, y) is occupied by the specified side.
+*/
 bool Board::get(Side side, int x, int y) {
     return occupied(x, y) && (black[x + 8*y] == (side == BLACK));
 }
 
+/**
+Sets position (x, y) to be occupied by the specified side.
+*/
 void Board::set(Side side, int x, int y) {
     taken.set(x + 8*y);
     black.set(x + 8*y, side == BLACK);
 }
 
+/**
+Flip a single piece at the specified position. Assumes the position is
+occupied; i.e. there is something to flip there.
+*/
+void Board::flip(int x, int y) {
+    black.flip(x + 8*y);
+}
+
+/**
+Returns whether (x, y) is on the board.
+*/
 bool Board::onBoard(int x, int y) {
     return(0 <= x && x < 8 && 0 <= y && y < 8);
 }
 
- 
-/*
- * Returns true if the game is finished; false otherwise. The game is finished 
- * if neither side has a legal move.
- */
-bool Board::isDone() {
-    return !(hasMoves(BLACK) || hasMoves(WHITE));
-}
 
-/*
- * Returns true if there are legal moves for the given side.
- */
-bool Board::hasMoves(Side side) {
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            Move move(i, j);
-            if (checkMove(&move, side)) return true;
-        }
-    }
-    return false;
-}
 
-/*
- * Returns true if a move is legal for the given side; false otherwise.
- */
-bool Board::checkMove(Move *m, Side side) {
-    // Passing is only legal if you have no moves.
-    if (m == NULL) return !hasMoves(side);
-
-    int X = m->getX();
-    int Y = m->getY();
-
-    // Make sure the square hasn't already been taken.
-    if (occupied(X, Y)) return false;
-
-    Side other = (side == BLACK) ? WHITE : BLACK;
-    for (int dx = -1; dx <= 1; dx++) {
-        for (int dy = -1; dy <= 1; dy++) {
-            if (dy == 0 && dx == 0) continue;
-
-            // Is there a capture in that direction?
-            int x = X + dx;
-            int y = Y + dy;
-            if (onBoard(x, y) && get(other, x, y)) {
-                do {
-                    x += dx;
-                    y += dy;
-                } while (onBoard(x, y) && get(other, x, y));
-
-                if (onBoard(x, y) && get(side, x, y)) return true;
-            }
-        }
-    }
-    return false;
-}
-
-/*
- * Modifies the board to reflect the specified move.
- */
+/**
+Updates the board to reflect the specified move. Assumes the move is valid.
+If the move is NULL, do not update the board.
+*/
 void Board::doMove(Move *m, Side side) {
     // A NULL move means pass.
     if (m == NULL) return;
-
-    // Ignore if move is invalid.
-    if (!checkMove(m, side)) return;
 
     int X = m->getX();
     int Y = m->getY();
@@ -139,6 +116,90 @@ void Board::doMove(Move *m, Side side) {
         }
     }
     set(side, X, Y);
+}
+
+Board *Board::doLegalMove(Move *m, Side side) {
+    int X = m->getX();
+    int Y = m->getY();
+
+    if (occupied(X, Y)) return NULL;
+
+    Board *newBoard = NULL;
+
+    Side other = (side == BLACK) ? WHITE : BLACK;
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            if (dy == 0 && dx == 0) continue;
+
+            int x = X + dx;
+            int y = Y + dy;
+            if (onBoard(x, y) && get(other, x, y)) {
+                do {
+                    x += dx;
+                    y += dy;
+                } while (onBoard(x, y) && get(other, x, y));
+
+                if (onBoard(x, y) && get(side, x, y)) {
+
+                    if (newBoard == NULL) {
+                        newBoard = this->copy();
+                    }
+
+                    for (int i = X + dx, j = Y + dy;
+                         i != x || j != y;
+                         i += dx, j += dy) {
+                        newBoard->flip(i, j);
+                    }
+                }
+            }
+        }
+    }
+
+    if (newBoard != NULL) {
+        newBoard->set(side, X, Y);
+
+    } else {
+    }
+
+    return newBoard;
+}
+
+/**
+Calculates the score, from the perspective of the specified side.
+(Squares occupied by the same side as "side" contribute positively;
+those occupied by the opposite side contribute negatively.)
+*/
+int Board::score(Side side) {
+    int output = 0;
+    for (int i = 0; i < 64; i++) {
+        if (taken[i]) {
+            if (black[i] == (side == BLACK)) {
+                output += heuristic_values[i];
+            } else {
+                output -= heuristic_values[i];
+            }
+        }
+    }
+    return output;
+}
+
+
+/**
+ * Simple score calculation, using this formula:
+ * board position score = (# stones you have) - (# stones your opponent has)
+ */ 
+int Board::simple_score(Side side) {
+	int output = 0;
+    for (int i = 0; i < 64; i++) {
+        if (taken[i]) {
+            if (black[i] == (side == BLACK)) {
+                output += 1;
+            } else {
+                output -= 1;
+            }
+        }
+    }
+    return output;
 }
 
 /*
@@ -177,4 +238,26 @@ void Board::setBoard(char data[]) {
             taken.set(i);
         }
     }
+}
+
+void Board::printboard()
+{
+	for (int j = 0; j < 8; j++) {
+        for (int i = 0; i < 8; i++) {
+            if (!this->occupied(i, j))
+            {
+				cerr << "0 ";
+			}
+			else if (this->get(WHITE, i, j))
+			{
+				cerr << "W ";
+			}
+			else if (this->get(BLACK, i, j))
+			{
+				cerr << "B ";
+			}
+        }
+        cerr << endl;
+    }
+    cerr << endl;
 }
