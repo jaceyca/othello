@@ -23,8 +23,7 @@ public:
     ~Board();
     Board *copy();
     
-    static const int heuristic_values[64];
-    
+    static const int heuristic_values[64];  
     void doMove(Move *m, Side side);
     Board *doLegalMove(Move *m, Side side);
     int score(Side side);

@@ -20,6 +20,10 @@ Board::Board() {
 Board::~Board() {
 }
 
+/**
+ * Used values from https://github.com/kartikkukreja/blog-codes/blob/master/src/Heuristic%20Function%20for%20Reversi%20%28Othello%29.cpp
+ */
+ 
 const int Board::heuristic_values[64] =
     {20,-3,11, 8, 8,11,-3,20,
      -3,-7,-4, 1, 1,-4,-7,-3,
@@ -122,45 +126,55 @@ Board *Board::doLegalMove(Move *m, Side side) {
     int X = m->getX();
     int Y = m->getY();
 
-    if (occupied(X, Y)) return NULL;
-
+    if (occupied(X, Y))
+    {
+		return NULL;
+	}
+	
     Board *newBoard = NULL;
 
     Side other = (side == BLACK) ? WHITE : BLACK;
-    for (int dx = -1; dx <= 1; dx++) {
-        for (int dy = -1; dy <= 1; dy++) {
-            if (dy == 0 && dx == 0) continue;
-
+    for (int dx = -1; dx <= 1; dx++)
+    {
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            if (dy == 0 && dx == 0) 
+            {
+				continue;
+			}
             int x = X + dx;
             int y = Y + dy;
-            if (onBoard(x, y) && get(other, x, y)) {
-                do {
+            if (onBoard(x, y) && get(other, x, y))
+            {
+                do
+                {
                     x += dx;
                     y += dy;
                 } while (onBoard(x, y) && get(other, x, y));
 
-                if (onBoard(x, y) && get(side, x, y)) {
-
-                    if (newBoard == NULL) {
+                if (onBoard(x, y) && get(side, x, y))
+                {
+                    if (newBoard == NULL)
+                    {
                         newBoard = this->copy();
                     }
 
                     for (int i = X + dx, j = Y + dy;
-                         i != x || j != y;
-                         i += dx, j += dy) {
+                        i != x || j != y;
+                        i += dx, j += dy)
+                        {
                         newBoard->flip(i, j);
-                    }
+						}
                 }
             }
         }
     }
 
-    if (newBoard != NULL) {
+    if (newBoard != NULL)
+    {
         newBoard->set(side, X, Y);
 
-    } else {
     }
-
     return newBoard;
 }
 
@@ -171,12 +185,16 @@ those occupied by the opposite side contribute negatively.)
 */
 int Board::score(Side side) {
     int output = 0;
-    for (int i = 0; i < 64; i++) {
-        if (taken[i]) {
-            if (black[i] == (side == BLACK)) {
-                output += heuristic_values[i];
-            } else {
-                output -= heuristic_values[i];
+    for (int i = 0; i < 64; i++)
+    {
+        if (taken[i])
+        {
+            if (black[i] == (side == BLACK))
+            {
+               output += heuristic_values[i];
+            } else
+            {
+               output -= heuristic_values[i];
             }
         }
     }
@@ -188,13 +206,17 @@ int Board::score(Side side) {
  * Simple score calculation, using this formula:
  * board position score = (# stones you have) - (# stones your opponent has)
  */ 
-int Board::simple_score(Side side) {
+int Board::simple_score(Side side){
 	int output = 0;
-    for (int i = 0; i < 64; i++) {
-        if (taken[i]) {
-            if (black[i] == (side == BLACK)) {
+    for (int i = 0; i < 64; i++)
+    {
+        if (taken[i])
+        {
+            if (black[i] == (side == BLACK))
+            {
                 output += 1;
-            } else {
+            } else
+            {
                 output -= 1;
             }
         }
@@ -230,11 +252,15 @@ int Board::countWhite() {
 void Board::setBoard(char data[]) {
     taken.reset();
     black.reset();
-    for (int i = 0; i < 64; i++) {
-        if (data[i] == 'b') {
+    for (int i = 0; i < 64; i++)
+    {
+        if (data[i] == 'b')
+        {
             taken.set(i);
             black.set(i);
-        } if (data[i] == 'w') {
+        } 
+        if (data[i] == 'w')
+        {
             taken.set(i);
         }
     }
@@ -242,8 +268,10 @@ void Board::setBoard(char data[]) {
 
 void Board::printboard()
 {
-	for (int j = 0; j < 8; j++) {
-        for (int i = 0; i < 8; i++) {
+	for (int j = 0; j < 8; j++)
+	{
+        for (int i = 0; i < 8; i++)
+        {
             if (!this->occupied(i, j))
             {
 				cerr << "0 ";

@@ -36,37 +36,42 @@ int Player::minimax(Board *board, Side side, int depth, Move *&best_move) {
 
     int best_score = -1000000;
     int new_score;
-    Move *new_move, *garbage;
+    Move *new_move, *temp;
     Board *new_board;
     
     Side otherSide = side == BLACK ? WHITE : BLACK;
     
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
             new_move = new Move(i, j);
             new_board = board->doLegalMove(new_move, side);
             
             if (new_board != NULL) {
-                new_score = -minimax(new_board, otherSide, depth - 1, garbage);
-                if (garbage != NULL) {
-                    delete garbage;
+                new_score = -minimax(new_board, otherSide, depth - 1, temp);
+                if (temp != NULL) {
+                    delete temp;
                 }
 
-                if (new_score > best_score) { 
-
+                if (new_score > best_score)
+					{ 
                     best_score = new_score;
-                    if (best_move != NULL) {
+                    if (best_move != NULL)
+                    {
                         delete best_move;
                     }
                     best_move = new_move;
-                    
-                } else {
+					}    
+                else
+				{
                     delete new_move;
                 }
-                
-            } else {
-                delete new_move;
             }
+            else
+			{
+				delete new_move;
+			}
             
             delete new_board;
         }
